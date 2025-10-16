@@ -43,6 +43,7 @@ import org.geysermc.geyser.entity.attribute.GeyserAttributeType;
 import org.geysermc.geyser.entity.type.BoatEntity;
 import org.geysermc.geyser.entity.type.Entity;
 import org.geysermc.geyser.entity.type.LivingEntity;
+import org.geysermc.geyser.input.InputLocksFlag;
 import org.geysermc.geyser.inventory.GeyserItemStack;
 import org.geysermc.geyser.item.Items;
 import org.geysermc.geyser.level.block.Blocks;
@@ -69,7 +70,6 @@ import org.geysermc.mcprotocollib.protocol.data.game.item.component.Equippable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -129,12 +129,6 @@ public class SessionPlayerEntity extends PlayerEntity {
 
     @Getter @Setter
     private float javaYaw;
-  
-    /**
-     * The vehicle that player was previously in before it got removed from the world.
-     */
-    @Getter @Setter
-    private Integer lastRemovedVehicle = null;
 
     public SessionPlayerEntity(GeyserSession session) {
         super(session, -1, 1, null, Vector3f.ZERO, Vector3f.ZERO, 0, 0, 0, null, null);
@@ -221,7 +215,7 @@ public class SessionPlayerEntity extends PlayerEntity {
      * @param position the new position of the Bedrock player
      */
     public void setPositionManual(Vector3f position) {
-        super.setPositionManual(position);
+        this.position = position;
 
         // Player is "above" the void so they're not supposed to no clip.
         if (session.isNoClip() && position.getY() - EntityDefinitions.PLAYER.offset() >= session.getBedrockDimension().minY() - 5) {
@@ -483,9 +477,10 @@ public class SessionPlayerEntity extends PlayerEntity {
             this.vehicle.updateBedrockMetadata();
         }
 
-        if (entity != null) {
-            this.lastRemovedVehicle = null;
-        }
+        // Bedrock player can dismount by pressing jump while Java cannot, so we need to prevent player from jumping to match vanilla behaviour.
+        this.session.setLockInput(InputLocksFlag.JUMP, entity != null && entity.canBeDismountWithJump());
+        this.session.updateInputLocks();
+
         super.setVehicle(entity);
     }
   
