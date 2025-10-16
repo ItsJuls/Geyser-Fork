@@ -37,7 +37,7 @@ jobs:
         env:
           BUILD_NUMBER: ${{ steps.release-info.outputs.curentRelease }}
           
-      - name: Archive Artifacts
+      - name: Archive and save Artifacts
         uses: GeyserMC/actions/upload-multi-artifact@master
         if: success()
         with:
